@@ -1,0 +1,937 @@
+<!--
+  MERIDIAN — Atlas Automate, "Write once, run real" (Lane B — cinematic footage)
+  Anonymized product-page concept for a global industrial-technology company's
+  flagship automation-engineering software. Companion to the home-page concept (../index.html).
+  MERIDIAN and Atlas Automate are fictional brands created for this design proposal.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Atlas Automate — MERIDIAN</title>
+<meta name="description" content="Anonymized product-page concept: one continuous cinematic shot from engineering canvas to a running production line.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%2300FFB9' stroke-width='2.5'/%3E%3Cline x1='16' y1='3' x2='16' y2='29' stroke='%2300FFB9' stroke-width='2.5'/%3E%3C/svg%3E">
+<script>document.documentElement.classList.add('js')</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#000028; --ink2:#000C3A; --volt:#00FFB9; --copper:#009999;
+    --copper-deep:#007575; --copper-display:#008C8C;
+    --paper:#F5F7F7; --steel:#7C8296; --line:rgba(255,255,255,.10);
+    --line-dark:rgba(0,0,40,.12);
+    --seam:#324857; /* sampled from the film's final frame at assembly */
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{background:var(--ink);scrollbar-color:#1A2242 var(--ink)}
+  body{
+    font-family:'Archivo',sans-serif;color:#E8EAF0;background:var(--ink);
+    -webkit-font-smoothing:antialiased;overflow-x:hidden;
+  }
+  ::selection{background:var(--volt);color:var(--ink)}
+  .mono{font-family:'IBM Plex Mono',monospace}
+
+  .skip{
+    position:fixed;top:10px;left:10px;z-index:200;background:var(--volt);color:var(--ink);
+    font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.1em;padding:10px 16px;
+    border-radius:6px;transform:translateY(-200%);transition:transform .2s;text-decoration:none;
+  }
+  .skip:focus-visible{transform:none}
+  :is(a,button,summary):focus-visible{outline:2px solid var(--volt);outline-offset:3px;border-radius:4px}
+  .aftermath :is(a,button,summary):focus-visible{outline-color:var(--ink)}
+
+  /* ---------- fixed header ---------- */
+  header{
+    position:fixed;inset:0 0 auto 0;z-index:90;display:flex;align-items:center;
+    justify-content:space-between;padding:20px 34px;color:#E8EAF0;
+    transition:color .45s ease;pointer-events:none;
+  }
+  header.on-light{color:var(--ink)}
+  header .lockup{display:flex;align-items:center;gap:12px;pointer-events:auto;text-decoration:none;color:currentColor}
+  header .lockup svg{display:block}
+  header .lockup .mark-stroke{stroke:currentColor}
+  header .wordmark{font-variation-settings:'wdth' 125,'wght' 800;font-size:15px;letter-spacing:.34em}
+  header .crumb{
+    font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.18em;opacity:.7;
+    margin-left:18px;padding-left:18px;border-left:1px solid currentColor;text-transform:uppercase;
+  }
+  .ch-readout{display:flex;flex-direction:column;align-items:flex-end;gap:7px;pointer-events:auto}
+  .ch-readout .label{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.22em;opacity:.85}
+  .ch-readout .bar{width:150px;height:2px;background:currentColor;opacity:.22;position:relative;overflow:hidden}
+  .ch-readout .bar i{position:absolute;inset:0;background:var(--volt);transform-origin:0 50%;transform:scaleX(0)}
+  header.on-light .ch-readout .bar i{background:var(--ink)}
+
+  /* ---------- film chrome ---------- */
+  .grain{
+    position:fixed;inset:-60%;z-index:80;pointer-events:none;opacity:.05;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
+    animation:grain 1.4s steps(4) infinite;
+  }
+  @keyframes grain{0%{transform:translate(0,0)}25%{transform:translate(-3%,2%)}50%{transform:translate(2%,-2%)}75%{transform:translate(-2%,-3%)}100%{transform:translate(0,0)}}
+  .vignette{
+    position:fixed;inset:0;z-index:79;pointer-events:none;
+    background:radial-gradient(120% 100% at 50% 50%,transparent 58%,rgba(0,0,20,.5) 100%);
+  }
+
+  /* ---------- the film (canvas scrub, 4 chapters) ---------- */
+  .filmscroll{position:relative;height:680vh}
+  .filmstage{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;background:var(--ink)}
+  #filmCanvas{position:absolute;inset:0;width:100%;height:100%}
+  .poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
+  html:not(.js) .poster{display:block}
+  #hero-particles{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  .film-fade{
+    position:absolute;left:0;right:0;bottom:0;height:34vh;pointer-events:none;opacity:0;
+    background:linear-gradient(180deg,transparent 0%,var(--seam) 92%);
+  }
+  .loader{
+    position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;gap:18px;
+    align-items:center;justify-content:center;background:var(--ink);transition:opacity .6s ease;
+  }
+  .loader.done{opacity:0;pointer-events:none}
+  .loader .mono{font-size:10.5px;letter-spacing:.3em;color:var(--steel)}
+  .loader-bar{width:210px;height:2px;background:rgba(255,255,255,.12);position:relative;overflow:hidden}
+  .loader-bar i{position:absolute;inset:0;background:var(--volt);transform-origin:0 50%;transform:scaleX(0)}
+
+  /* ---------- beats ---------- */
+  .kicker{
+    font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.30em;
+    color:var(--volt);text-transform:uppercase;
+  }
+  .beat{position:absolute;z-index:6;pointer-events:none;will-change:opacity,transform}
+  .js .beat{opacity:0}
+  .beat h2{
+    font-variation-settings:'wdth' 100,'wght' 780;
+    font-size:clamp(34px,5.2vw,74px);line-height:1.02;letter-spacing:-.015em;
+    margin-top:14px;text-wrap:balance;text-shadow:0 2px 40px rgba(0,0,26,.55);
+  }
+  .beat p{color:#C9CFDB;line-height:1.65;font-size:15.5px;max-width:460px;margin-top:16px;text-shadow:0 1px 18px rgba(0,0,26,.65)}
+  .beat-hero{inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;text-align:center}
+  h1{
+    font-variation-settings:'wdth' 100,'wght' 800;
+    font-size:clamp(44px,7.6vw,124px);line-height:.98;letter-spacing:-.025em;
+    padding:0 20px;text-wrap:balance;text-shadow:0 4px 60px rgba(0,0,26,.6);
+  }
+  h1 .accent{color:var(--volt)}
+  .beat-hero .sub{max-width:560px;font-size:16px;line-height:1.65;color:#AEB6C6}
+  .beat-hero .cta-row{pointer-events:auto;display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:4px}
+  .scroll-cue{
+    position:absolute;bottom:34px;left:50%;transform:translateX(-50%);
+    font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.26em;color:var(--steel);
+    display:flex;align-items:center;gap:12px;
+  }
+  .scroll-cue .tick{width:1px;height:34px;background:var(--volt);transform-origin:top;animation:cue 1.8s ease-in-out infinite}
+  @keyframes cue{0%{transform:scaleY(0)}55%{transform:scaleY(1)}100%{transform:scaleY(0);transform-origin:bottom}}
+  .beat-left{left:6vw;bottom:14vh;max-width:560px}
+  .beat-right{right:6vw;top:16vh;text-align:right}
+  .beat-right .anno{
+    font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.16em;color:#C9CFDB;
+    line-height:2.1;text-shadow:0 1px 14px rgba(0,0,26,.7);
+  }
+  .beat-right .anno b{color:var(--volt);font-weight:500}
+  .beat-finale{left:0;right:0;top:13vh;text-align:center}
+  .beat-finale p{max-width:none}
+  .beat-finale .post{font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.22em;
+    color:rgba(232,234,240,.85);margin:18px auto 0;text-transform:uppercase;text-shadow:0 1px 14px rgba(0,0,26,.6)}
+
+  html.jumped .grain,html.jumped .scroll-cue .tick{animation:none}
+
+  .landing{height:26vh;background:linear-gradient(180deg,var(--seam) 0%,var(--paper) 100%)}
+
+  /* ---------- after-film content ---------- */
+  .aftermath{background:var(--paper);color:var(--ink);position:relative;z-index:5}
+  .wrap{max-width:1240px;margin:0 auto;padding:0 34px}
+  .aftermath .kicker{color:var(--copper-deep)}
+  .aftermath section{padding:100px 0}
+  .aftermath h2{
+    font-variation-settings:'wdth' 100,'wght' 780;
+    font-size:clamp(34px,4.4vw,60px);line-height:1.06;letter-spacing:-.02em;text-wrap:balance;
+  }
+  .aftermath h2 .accent{color:var(--copper-display)}
+
+  #frontdoor{padding-top:60px}
+  #frontdoor .lead{max-width:860px}
+  #frontdoor h2{font-size:clamp(38px,5vw,72px);margin:18px 0 26px}
+  #frontdoor p{font-size:17px;line-height:1.7;color:rgba(0,0,40,.68);max-width:620px}
+  .cta-row{display:flex;gap:16px;margin-top:40px;flex-wrap:wrap}
+  .btn{
+    display:inline-flex;align-items:center;gap:12px;padding:10px 26px;height:54px;
+    font-variation-settings:'wdth' 100,'wght' 640;font-size:15px;letter-spacing:.01em;
+    text-decoration:none;border-radius:4px;transition:transform .3s cubic-bezier(.2,.8,.2,1),background .3s,border-color .3s;
+  }
+  .btn:hover{transform:translateY(-2px)}
+  .btn-solid{background:var(--copper-deep);color:#fff}
+  .btn-solid:hover{background:#005F5F}
+  .btn-ghost{border:1.5px solid rgba(0,0,40,.3);color:var(--ink)}
+  .btn-ghost:hover{border-color:var(--ink)}
+  .btn-onfilm{background:var(--volt);color:var(--ink);font-variation-settings:'wdth' 100,'wght' 700}
+  .btn-onfilm:hover{background:#5CFFD0}
+  .btn-onfilm-ghost{border:1.5px solid rgba(255,255,255,.35);color:#fff}
+  .btn-onfilm-ghost:hover{border-color:#fff}
+  .btn .arr{font-family:'IBM Plex Mono',monospace}
+
+  /* pillars */
+  .pillar-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin-top:56px}
+  .pillar{
+    border:1px solid var(--line-dark);border-radius:14px;padding:32px 28px;min-height:220px;
+    display:flex;flex-direction:column;gap:14px;background:#fff;
+    transition:transform .3s cubic-bezier(.2,.8,.2,1),border-color .3s;
+  }
+  .pillar:hover{transform:translateY(-4px);border-color:var(--copper)}
+  .pillar .p-k{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.26em;color:var(--copper-deep);text-transform:uppercase}
+  .pillar h3{font-variation-settings:'wdth' 100,'wght' 760;font-size:22px;line-height:1.15;text-wrap:balance}
+  .pillar p{font-size:14px;line-height:1.65;color:rgba(0,0,40,.62)}
+
+  /* copilot band */
+  #copilot{background:var(--ink);color:#E8EAF0;border-radius:34px;margin:0 14px}
+  #copilot .inner{max-width:1240px;margin:0 auto;padding:110px 34px}
+  #copilot .kicker{color:var(--volt)}
+  #copilot h2 .accent{color:var(--volt)}
+  #copilot .cols{display:flex;gap:60px;align-items:flex-start;flex-wrap:wrap;margin-top:10px}
+  #copilot .cols > div{flex:1;min-width:300px}
+  #copilot p{color:#AEB6C6;line-height:1.7;font-size:16px;max-width:520px;margin-top:20px}
+  .cop-stats{display:flex;gap:8vw;margin-top:44px;flex-wrap:wrap}
+  .cop-stats .num{
+    font-variation-settings:'wdth' 100,'wght' 800;font-size:clamp(34px,4vw,56px);
+    color:var(--volt);font-variant-numeric:tabular-nums;letter-spacing:-.01em;
+  }
+  .cop-stats .cap{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.22em;color:var(--steel);margin-top:10px;text-transform:uppercase;max-width:190px;line-height:1.7}
+  .cop-list{margin-top:34px;display:flex;flex-direction:column;gap:0;border-top:1px solid var(--line)}
+  .cop-list div{padding:18px 0;border-bottom:1px solid var(--line);display:flex;gap:16px;align-items:baseline}
+  .cop-list .mono{color:var(--volt);font-size:12px}
+  .cop-list span{color:#C9CFDB;font-size:15px;line-height:1.6}
+
+  /* modules */
+  #modules .rows{margin-top:64px;border-top:1px solid var(--line-dark)}
+  .mod-row{
+    display:grid;grid-template-columns:150px 1fr auto 44px;gap:34px;align-items:center;
+    padding:40px 0;border-bottom:1px solid var(--line-dark);text-decoration:none;color:var(--ink);
+  }
+  .js .mod-row{clip-path:inset(0 0 100% 0)}
+  .mod-row .tag{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.24em;color:rgba(0,0,40,.66);text-transform:uppercase}
+  .mod-row h3{font-variation-settings:'wdth' 100,'wght' 720;font-size:clamp(20px,2.2vw,29px);line-height:1.2;transition:color .3s;text-wrap:balance}
+  .mod-row:hover h3{color:var(--copper-deep)}
+  .mod-row .sub{font-size:14px;color:rgba(0,0,40,.55);max-width:300px;line-height:1.55}
+  .mod-row .go{font-family:'IBM Plex Mono',monospace;font-size:20px;color:rgba(0,0,40,.55);transition:transform .3s,color .3s}
+  .mod-row:hover .go{transform:translateX(6px);color:var(--copper-deep)}
+  .options-note{
+    margin-top:34px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.14em;
+    color:rgba(0,0,40,.6);text-transform:uppercase;line-height:2;
+  }
+
+  /* faq */
+  #faq details{border-bottom:1px solid var(--line-dark);padding:26px 0}
+  #faq details:first-of-type{border-top:1px solid var(--line-dark);margin-top:56px}
+  #faq summary{
+    cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:20px;
+    font-variation-settings:'wdth' 100,'wght' 700;font-size:clamp(18px,1.8vw,23px);
+  }
+  #faq summary::-webkit-details-marker{display:none}
+  #faq summary::after{content:"+";font-family:'IBM Plex Mono',monospace;font-size:22px;color:var(--copper-deep);transition:transform .25s}
+  #faq details[open] summary::after{transform:rotate(45deg)}
+  #faq details p{margin-top:16px;font-size:15px;line-height:1.7;color:rgba(0,0,40,.65);max-width:720px}
+
+  /* contact band */
+  #contact .band{
+    background:#fff;border:1px solid var(--line-dark);border-radius:20px;
+    padding:64px 54px;display:flex;justify-content:space-between;align-items:center;gap:44px;flex-wrap:wrap;
+  }
+  #contact h2{font-size:clamp(30px,3.6vw,48px)}
+  #contact p{margin-top:14px;font-size:15.5px;line-height:1.65;color:rgba(0,0,40,.62);max-width:460px}
+
+  /* footer */
+  footer{background:var(--ink);color:#E8EAF0;padding:90px 0 44px;margin-top:100px}
+  footer .wrap{display:flex;flex-direction:column;gap:70px}
+  .foot-top{display:flex;justify-content:space-between;gap:44px;flex-wrap:wrap}
+  .foot-brand .wordmark{font-variation-settings:'wdth' 125,'wght' 800;font-size:17px;letter-spacing:.34em}
+  .foot-brand p{color:var(--steel);font-size:13px;margin-top:16px;max-width:280px;line-height:1.6}
+  .foot-cols{display:flex;gap:70px;flex-wrap:wrap}
+  .foot-col .h{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.26em;color:var(--steel);text-transform:uppercase;margin-bottom:18px}
+  .foot-col a{display:block;color:#C9CFDB;text-decoration:none;font-size:14px;padding:5px 0;transition:color .3s}
+  .foot-col a:hover{color:var(--volt)}
+  .foot-bottom{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:28px}
+  .foot-bottom p{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.08em;color:var(--steel);line-height:1.8}
+
+  .rv{will-change:opacity,transform}
+  .js .rv{opacity:0;transform:translateY(34px);visibility:hidden}
+
+  /* ---------- reduced motion / no-JS ---------- */
+  @media (prefers-reduced-motion: reduce){
+    .grain{animation:none}
+    .scroll-cue .tick{animation:none}
+  }
+  html.reduced .filmscroll,html:not(.js) .filmscroll{height:auto}
+  html.reduced .filmstage,html:not(.js) .filmstage{position:static;height:auto;min-height:60vh;padding:140px 0 80px;overflow:visible}
+  html.reduced #filmCanvas,html:not(.js) #filmCanvas{display:none}
+  html.reduced .poster{display:block;position:absolute;inset:0;height:100%;opacity:.45}
+  html:not(.js) .poster{opacity:.45}
+  html.reduced .loader,html:not(.js) .loader{display:none}
+  html.reduced .beat,html:not(.js) .beat{
+    position:relative;inset:auto;opacity:1 !important;transform:none !important;
+    max-width:820px;margin:70px auto 0;padding:0 26px;text-align:left;pointer-events:auto;
+  }
+  html.reduced .beat-hero,html:not(.js) .beat-hero{display:block;text-align:center;margin-top:0}
+  html.reduced .beat-hero .scroll-cue,html:not(.js) .beat-hero .scroll-cue{display:none}
+  html.reduced .beat-finale,html:not(.js) .beat-finale{text-align:center}
+  html.reduced .beat-right,html:not(.js) .beat-right{text-align:left}
+  html.reduced .rv{opacity:1;transform:none;visibility:visible}
+  html.reduced .mod-row{clip-path:none}
+  html.reduced .landing,html:not(.js) .landing{background:linear-gradient(180deg,var(--ink) 0%,var(--paper) 100%)}
+
+  @media (max-width:760px){
+    header{padding:16px 20px}
+    header .crumb{display:none}
+    .ch-readout .bar{width:90px}
+    .beat-left{left:20px;right:20px;bottom:10vh}
+    .beat-right{display:none}
+    .mod-row{grid-template-columns:1fr;gap:12px}
+    #contact .band{padding:44px 28px}
+    .wrap{padding:0 22px}
+  }
+</style>
+</head>
+<body>
+
+<a class="skip" href="#aftermath">Skip intro film</a>
+
+<header id="siteHeader">
+  <div style="display:flex;align-items:center">
+    <a class="lockup" href="../" aria-label="Meridian home">
+      <svg width="26" height="26" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <circle class="mark-stroke" cx="16" cy="16" r="13" stroke-width="2"/>
+        <line class="mark-stroke" x1="16" y1="3" x2="16" y2="29" stroke-width="2"/>
+        <ellipse class="mark-stroke" cx="16" cy="16" rx="6" ry="13" stroke-width="1"/>
+      </svg>
+      <span class="wordmark">MERIDIAN</span>
+    </a>
+    <span class="crumb" aria-hidden="true">Products / Atlas Automate</span>
+  </div>
+  <div class="ch-readout" aria-hidden="true">
+    <span class="label" id="chLabel">01 / THE CANVAS</span>
+    <span class="bar"><i id="chBar"></i></span>
+  </div>
+</header>
+
+<div class="grain" aria-hidden="true"></div>
+<div class="vignette" aria-hidden="true"></div>
+
+<main id="content">
+
+<!-- ==================== THE FILM ==================== -->
+<div class="filmscroll" id="filmscroll" role="region" aria-label="Intro film — one continuous shot from engineering canvas to a running production line">
+  <div class="filmstage" id="filmstage">
+    <img class="poster" src="frames/f0000.jpg" alt="Holographic engineering diagrams glowing teal in a dark void — the opening frame of the film">
+    <canvas id="filmCanvas" aria-hidden="true"></canvas>
+    <canvas id="hero-particles" aria-hidden="true"></canvas>
+
+    <div class="beat beat-hero" data-in="-0.1" data-peak="0" data-out="0.09">
+      <p class="kicker">Meridian · Automation software</p>
+      <h1>Write once.<br>Run <span class="accent">real.</span></h1>
+      <p class="sub">Atlas Automate is one engineering environment for the whole
+        automation lifecycle — configure, program, simulate, commission and operate.</p>
+      <div class="cta-row">
+        <a class="btn btn-onfilm" href="#contact">Start free trial <span class="arr">→</span></a>
+        <a class="btn btn-onfilm-ghost" href="#aftermath">Explore the environment <span class="arr">↓</span></a>
+      </div>
+      <div class="scroll-cue"><span class="tick"></span>SCROLL — ONE CONTINUOUS SHOT</div>
+    </div>
+
+    <div class="beat beat-left" data-in="0.28" data-peak="0.36" data-out="0.45">
+      <p class="kicker">02 / The build</p>
+      <h2>Engineer it once.</h2>
+      <p>Hardware, logic, motion, safety and visualization — one project, one data
+        model, shared by your team and its copilot.</p>
+    </div>
+
+    <div class="beat beat-right" data-in="0.46" data-peak="0.52" data-out="0.58">
+      <p class="anno">BUILD 4,120 — <b>LINE 07</b><br>
+        VALIDATED <b>IN SIMULATION</b><br>
+        ON-SITE SURPRISES: <b>ZERO</b></p>
+    </div>
+
+    <div class="beat beat-left" data-in="0.58" data-peak="0.66" data-out="0.74">
+      <p class="kicker">03 / The signal</p>
+      <h2>Download.<br>Then watch it wake.</h2>
+      <p>What you wrote flows to every controller, drive and panel on the line —
+        exactly as it ran in the twin.</p>
+    </div>
+
+    <div class="beat beat-finale" data-in="0.82" data-peak="0.92" data-out="2">
+      <p class="kicker">04 / The line</p>
+      <h2>The line runs. You iterate.</h2>
+      <p class="post">Configure · program · simulate · commission · operate</p>
+    </div>
+
+    <div class="film-fade" id="filmFade" aria-hidden="true"></div>
+    <div class="loader" id="loader" aria-hidden="true">
+      <div class="loader-bar"><i id="loaderBar"></i></div>
+      <span class="mono">LOADING THE FILM</span>
+    </div>
+  </div>
+</div>
+
+<div class="landing" aria-hidden="true"></div>
+
+<!-- ==================== AFTER THE FILM ==================== -->
+<div class="aftermath" id="aftermath">
+
+  <!-- front door -->
+  <section id="frontdoor">
+    <div class="wrap">
+      <div class="lead rv">
+        <p class="kicker">Products / Automation software</p>
+        <h2>One environment for the whole <span class="accent">engineering lifecycle.</span></h2>
+        <p>From hardware configuration and controller logic to simulation,
+          commissioning and live operations — Atlas Automate keeps every discipline
+          in one project, with an AI copilot that does the tedious parts.</p>
+        <div class="cta-row">
+          <a class="btn btn-solid" href="#contact">Start free trial <span class="arr">→</span></a>
+          <a class="btn btn-ghost" href="#contact">Talk to an engineer <span class="arr">→</span></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- pillars -->
+  <section id="pillars" style="padding-top:0">
+    <div class="wrap">
+      <div class="rv">
+        <p class="kicker">Why teams switch</p>
+        <h2>More than an engineering tool.</h2>
+      </div>
+      <div class="pillar-grid">
+        <div class="pillar rv">
+          <span class="p-k">Copilot</span>
+          <h3>An assistant that executes</h3>
+          <p>Connected to your project, it plans, configures and validates whole
+            engineering tasks — beyond suggestions, into finished work.</p>
+        </div>
+        <div class="pillar rv">
+          <span class="p-k">Simulate first</span>
+          <h3>Test it before it exists</h3>
+          <p>Run the full machine against its digital twin and commission with the
+            surprises already found — on screen, not on site.</p>
+        </div>
+        <div class="pillar rv">
+          <span class="p-k">One project</span>
+          <h3>Every discipline, one data model</h3>
+          <p>Controllers, drives, safety and visualization stay consistent because
+            they were never separate files to begin with.</p>
+        </div>
+        <div class="pillar rv">
+          <span class="p-k">Operations</span>
+          <h3>Transparent from first run</h3>
+          <p>Consistent data and built-in analytics from the moment the line moves —
+            energy, throughput, health.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- copilot band -->
+  <div id="copilot">
+    <div class="inner">
+      <div class="rv">
+        <p class="kicker">The copilot</p>
+        <h2>The tedious 80%,<br><span class="accent">done by morning.</span></h2>
+      </div>
+      <div class="cols">
+        <div class="rv">
+          <p>The Automate Copilot connects to your local engineering system and works
+            inside your project — planning changes, configuring hardware, writing and
+            validating logic, and documenting what it did. You review; it types.</p>
+          <div class="cop-stats">
+            <div><div class="num">500K+</div><div class="cap">Engineers with access today</div></div>
+            <div><div class="num">−40%</div><div class="cap">Time on repetitive engineering tasks</div></div>
+          </div>
+        </div>
+        <div class="rv">
+          <div class="cop-list">
+            <div><span class="mono">01</span><span>Describe the change in plain language — a new station, a retuned drive, a safety zone.</span></div>
+            <div><span class="mono">02</span><span>The copilot plans it, edits the project and runs it against the simulation twin.</span></div>
+            <div><span class="mono">03</span><span>You review the diff and the test results, then release to the line.</span></div>
+          </div>
+          <div class="cta-row"><a class="btn btn-onfilm" href="#contact">Start free trial <span class="arr">→</span></a></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- modules -->
+  <section id="modules">
+    <div class="wrap">
+      <div class="rv">
+        <p class="kicker">Inside the environment</p>
+        <h2>Everything you need, nothing bolted on.</h2>
+      </div>
+      <div class="rows">
+        <a class="mod-row" href="#">
+          <span class="tag">Program</span>
+          <h3>Configure, program and diagnose every controller in the family</h3>
+          <span class="sub">One intuitive editor from compact machines to plant-wide control.</span>
+          <span class="go">→</span>
+        </a>
+        <a class="mod-row" href="#">
+          <span class="tag">Visualize</span>
+          <h3>Build operator visualization from one machine to the whole plant</h3>
+          <span class="sub">Panels, screens and dashboards from the same project data.</span>
+          <span class="go">→</span>
+        </a>
+        <a class="mod-row" href="#">
+          <span class="tag">Commission</span>
+          <h3>Tune and validate drives without leaving the project</h3>
+          <span class="sub">Motion and drive commissioning against the same data model.</span>
+          <span class="go">→</span>
+        </a>
+      </div>
+      <p class="options-note rv">Also in the environment — multi-user engineering · modular type packages · extended security · openness APIs</p>
+    </div>
+  </section>
+
+  <!-- faq -->
+  <section id="faq" style="padding-top:0">
+    <div class="wrap">
+      <div class="rv">
+        <p class="kicker">Questions</p>
+        <h2>Asked often, answered fast.</h2>
+      </div>
+      <details class="rv">
+        <summary>Does it integrate robots and other vendors' equipment?</summary>
+        <p>Yes — the environment is open by design. Third-party robots, devices and
+          tools connect through open interfaces and standard protocols, and behave
+          like first-class citizens of the project.</p>
+      </details>
+      <details class="rv">
+        <summary>Does it run in the cloud?</summary>
+        <p>Engineer locally, in the cloud, or both. Projects sync across teams with
+          multi-user engineering, and the copilot works wherever the project lives.</p>
+      </details>
+      <details class="rv">
+        <summary>How do I get started?</summary>
+        <p>Start the free trial — it ships with the simulation twin, sample projects
+          and the copilot enabled. Most engineers run their first virtual line in an
+          afternoon.</p>
+      </details>
+    </div>
+  </section>
+
+  <!-- contact -->
+  <section id="contact" style="padding-top:0">
+    <div class="wrap">
+      <div class="band rv">
+        <div>
+          <h2>Ready when you are.</h2>
+          <p>No twenty-field forms. Tell us about your line, and an automation
+            engineer — a human one — replies within one working day.</p>
+        </div>
+        <div class="cta-row" style="margin-top:0">
+          <a class="btn btn-solid" href="#">Start free trial <span class="arr">→</span></a>
+          <a class="btn btn-ghost" href="#">Book a walkthrough <span class="arr">→</span></a>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-top">
+      <div class="foot-brand">
+        <a class="lockup" href="../" style="color:#E8EAF0;text-decoration:none;display:flex;align-items:center;gap:12px">
+          <svg width="26" height="26" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+            <circle cx="16" cy="16" r="13" stroke="#E8EAF0" stroke-width="2"/>
+            <line x1="16" y1="3" x2="16" y2="29" stroke="#E8EAF0" stroke-width="2"/>
+            <ellipse cx="16" cy="16" rx="6" ry="13" stroke="#E8EAF0" stroke-width="1"/>
+          </svg>
+          <span class="wordmark">MERIDIAN</span>
+        </a>
+        <p>Where digital becomes real. Industrial technology for factories, grids,
+          transit and buildings.</p>
+      </div>
+      <div class="foot-cols">
+        <div class="foot-col">
+          <p class="h">Platform</p>
+          <a href="../">Atlas One</a><a href="#">Atlas Design</a><a href="#" aria-current="page">Atlas Automate</a><a href="#">Atlas Grid</a>
+        </div>
+        <div class="foot-col">
+          <p class="h">Product</p>
+          <a href="#modules">Inside the environment</a><a href="#copilot">The copilot</a><a href="#faq">FAQ</a><a href="#contact">Free trial</a>
+        </div>
+        <div class="foot-col">
+          <p class="h">Company</p>
+          <a href="../">Home</a><a href="#">Newsroom</a><a href="#">Careers</a>
+        </div>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <p>© 2026 MERIDIAN GROUP — A FICTIONAL BRAND.<br>THIS PAGE IS AN ANONYMIZED DESIGN PROPOSAL FOR A PRODUCT PAGE OF A GLOBAL INDUSTRIAL-TECHNOLOGY COMPANY.</p>
+      <p>PRIVACY · TERMS · IMPRINT</p>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.14/dist/lenis.min.js"></script>
+<script>
+(function(){
+  'use strict';
+  var REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var JUMP = new URLSearchParams(location.search).get('jump');
+  if (JUMP !== null){
+    history.scrollRestoration = 'manual';
+    document.documentElement.classList.add('jumped');
+  }
+
+  /* ---------- film config (set by the assembly step) ---------- */
+  var FRAME_COUNT = 241;          /* assembly: f0000..f0240 */
+  var FRAME_W = 864, FRAME_H = 496;   /* full-bleed, no crop needed */
+  function framePath(i){ return 'frames/f' + String(i).padStart(4, '0') + '.jpg'; }
+
+  /* ---------- jank meter (dev contract) ---------- */
+  (function(){
+    var deltas = [], last = performance.now();
+    function tick(t){
+      deltas.push(t - last); last = t;
+      if (deltas.length >= 120){
+        var s = deltas.slice().sort(function(a,b){return a-b});
+        console.log('[jank] p95=' + s[Math.floor(s.length*0.95)].toFixed(1) +
+                    'ms max=' + s[s.length-1].toFixed(1) + 'ms');
+        deltas.length = 0;
+      }
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  })();
+
+  /* ---------- reduced motion: static page, contract honoured ---------- */
+  if (REDUCED){
+    document.documentElement.classList.add('reduced');
+    var hdrR = document.getElementById('siteHeader');
+    var overLight = false, overDark = false;
+    function applyHdrR(){ hdrR.classList.toggle('on-light', overLight && !overDark); }
+    if ('IntersectionObserver' in window){
+      var ioOpts = { rootMargin: '-44px 0px -80% 0px' };
+      new IntersectionObserver(function(es){
+        es.forEach(function(e){ overLight = e.isIntersecting; }); applyHdrR();
+      }, ioOpts).observe(document.getElementById('aftermath'));
+      new IntersectionObserver(function(es){
+        es.forEach(function(e){ overDark = e.isIntersecting; }); applyHdrR();
+      }, ioOpts).observe(document.getElementById('copilot'));
+    }
+    var settleReduced = function(){
+      if (JUMP !== null) window.scrollTo(0, +JUMP || 0);
+      requestAnimationFrame(function(){ requestAnimationFrame(function(){
+        window.__ready = true;
+      }); });
+    };
+    var fontsReadyR = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
+    fontsReadyR.then(function(){
+      if (document.readyState === 'complete') settleReduced();
+      else window.addEventListener('load', settleReduced);
+    });
+    return;
+  }
+
+  gsap.registerPlugin(ScrollTrigger);
+  ScrollTrigger.config({ ignoreMobileResize: true });
+
+  /* ---------- Lenis (skipped in jump mode for determinism) ---------- */
+  var lenis = null;
+  if (JUMP === null){
+    lenis = new Lenis({ lerp: 0.09, smoothWheel: true });
+    lenis.on('scroll', ScrollTrigger.update);
+    gsap.ticker.add(function(t){ lenis.raf(t * 1000); });
+    gsap.ticker.lagSmoothing(0);
+  }
+
+  /* ================================================================
+     THE SCRUB ENGINE — canvas + frames, ImageBitmap sliding window
+     ================================================================ */
+  var stage = document.getElementById('filmstage');
+  var scroller = document.getElementById('filmscroll');
+  var canvas = document.getElementById('filmCanvas');
+  var ctx = canvas.getContext('2d');
+  var DPR = Math.min(1.5, window.devicePixelRatio || 1);
+
+  function sizeCanvas(){
+    canvas.width = Math.round(stage.clientWidth * DPR);
+    canvas.height = Math.round(stage.clientHeight * DPR);
+    if (displayed >= 0) drawFrame(displayed, true);
+  }
+
+  var images = new Array(FRAME_COUNT);
+  var loadedCount = 0, allLoaded = false;
+  var loaderEl = document.getElementById('loader');
+  var loaderBar = document.getElementById('loaderBar');
+  var loadResolve, loadPromise = new Promise(function(r){ loadResolve = r; });
+  (function pump(){
+    var next = 0, inFlight = 0, CONC = 10;
+    function kick(){
+      while (inFlight < CONC && next < FRAME_COUNT){
+        (function(i){
+          var img = new Image();
+          inFlight++; next++;
+          img.onload = img.onerror = function(){
+            inFlight--; loadedCount++;
+            if (img.complete && img.naturalWidth) images[i] = img;
+            loaderBar.style.transform = 'scaleX(' + (loadedCount / FRAME_COUNT) + ')';
+            if (loadedCount >= FRAME_COUNT){ allLoaded = true; loadResolve(); }
+            else kick();
+          };
+          img.src = framePath(i);
+        })(next);
+      }
+    }
+    kick();
+  })();
+
+  var bitmaps = new Map(), decoding = new Set();
+  var B_AHEAD = 18, B_KEEP = 28, bmpCenter = -999;
+  var displayed = -1;
+  function ensureBitmaps(center){
+    if (Math.abs(center - bmpCenter) < 3) return;
+    bmpCenter = center;
+    var lo = Math.max(0, center - B_AHEAD), hi = Math.min(FRAME_COUNT - 1, center + B_AHEAD);
+    for (var i = lo; i <= hi; i++){
+      (function(i){
+        if (bitmaps.has(i) || decoding.has(i) || !images[i]) return;
+        decoding.add(i);
+        createImageBitmap(images[i]).then(function(b){
+          decoding.delete(i);
+          if (Math.abs(i - bmpCenter) > B_KEEP){ b.close(); return; }
+          bitmaps.set(i, b);
+          if (i === displayed) drawFrame(i, true);
+        }).catch(function(){ decoding.delete(i); });
+      })(i);
+    }
+    Array.prototype.forEach.call(Array.from(bitmaps.keys()), function(k){
+      if (k < center - B_KEEP || k > center + B_KEEP){ bitmaps.get(k).close(); bitmaps.delete(k); }
+    });
+  }
+  function nearestFrame(i){
+    if (images[i]) return i;
+    for (var d = 1; d < FRAME_COUNT; d++){
+      if (images[i - d]) return i - d;
+      if (images[i + d]) return i + d;
+    }
+    return -1;
+  }
+  function drawFrame(idx, force){
+    if (idx === displayed && !force) return;
+    var src = bitmaps.get(idx), w = FRAME_W, h = FRAME_H;
+    if (!src){
+      var n = nearestFrame(idx);
+      if (n < 0) return;
+      src = bitmaps.get(n) || images[n];
+      w = src.width || FRAME_W; h = src.height || FRAME_H;
+    } else { w = src.width; h = src.height; }
+    var cw = canvas.width, ch = canvas.height;
+    var s = Math.max(cw / w, ch / h);
+    var dw = w * s, dh = h * s;
+    ctx.drawImage(src, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
+    displayed = idx;
+  }
+
+  /* ---------- ambient hero particles ---------- */
+  var pCanvas = document.getElementById('hero-particles');
+  var pAlpha = 1;
+  (function(){
+    var pctx = pCanvas.getContext('2d');
+    var sprite = document.createElement('canvas'); sprite.width = sprite.height = 32;
+    var sctx = sprite.getContext('2d');
+    var grad = sctx.createRadialGradient(16,16,0,16,16,16);
+    grad.addColorStop(0,'rgba(0,255,185,.9)'); grad.addColorStop(.4,'rgba(0,255,185,.25)');
+    grad.addColorStop(1,'rgba(0,255,185,0)');
+    sctx.fillStyle = grad; sctx.fillRect(0,0,32,32);
+    var W, H, parts = [];
+    function size(){
+      var r = pCanvas.getBoundingClientRect();
+      W = pCanvas.width = Math.max(1, Math.round(r.width)) || window.innerWidth;
+      H = pCanvas.height = Math.max(1, Math.round(r.height)) || window.innerHeight;
+    }
+    size(); window.addEventListener('resize', size); window.addEventListener('load', size);
+    for (var i = 0; i < 70; i++){
+      parts.push({ x: Math.random(), y: Math.random(), z: .3 + Math.random()*.7,
+                   ph: Math.random()*Math.PI*2, sp: .00012 + Math.random()*.00028 });
+    }
+    function draw(t){
+      if (pAlpha <= 0.005){ pctx.clearRect(0,0,W,H); return requestAnimationFrame(draw); }
+      pctx.clearRect(0,0,W,H);
+      if (JUMP !== null) t = 1000;
+      for (var i = 0; i < parts.length; i++){
+        var p = parts[i];
+        if (JUMP === null){ p.y -= p.sp * p.z * 16; if (p.y < -0.04) p.y = 1.04; }
+        var tw = .55 + .45*Math.sin(t*.0012 + p.ph);
+        var s = 3 + p.z*7;
+        pctx.globalAlpha = pAlpha * tw * p.z;
+        pctx.drawImage(sprite, p.x*W, p.y*H, s, s);
+      }
+      pctx.globalAlpha = 1;
+      requestAnimationFrame(draw);
+    }
+    requestAnimationFrame(draw);
+  })();
+
+  /* ---------- beats ---------- */
+  var beats = Array.prototype.map.call(document.querySelectorAll('.beat'), function(el){
+    return { el: el,
+      in:  parseFloat(el.getAttribute('data-in')),
+      peak: parseFloat(el.getAttribute('data-peak')),
+      out: parseFloat(el.getAttribute('data-out')) };
+  });
+  function beatAlpha(b, p){
+    if (p < b.in || (b.out <= 1.5 && p > b.out)) return 0;
+    if (p < b.peak) return (p - b.in) / Math.max(1e-4, b.peak - b.in);
+    if (b.out > 1.5) return 1;
+    return 1 - (p - b.peak) / Math.max(1e-4, b.out - b.peak);
+  }
+
+  /* ---------- adaptive header ---------- */
+  var lumCanvas = document.createElement('canvas'); lumCanvas.width = 16; lumCanvas.height = 4;
+  var lumCtx = lumCanvas.getContext('2d', { willReadFrequently: true });
+  var hdr = document.getElementById('siteHeader');
+  var filmLight = false, inAftermath = false, inDarkBand = false;
+  function applyHeader(){
+    hdr.classList.toggle('on-light', filmLight || (inAftermath && !inDarkBand));
+  }
+  function sampleLuminance(){
+    if (displayed < 0) return;
+    var src = bitmaps.get(displayed) || images[displayed];
+    if (!src) return;
+    try {
+      var h = (src.height || FRAME_H);
+      lumCtx.drawImage(src, 0, 0, (src.width || FRAME_W), Math.max(1, Math.round(h * .14)), 0, 0, 16, 4);
+      var d = lumCtx.getImageData(0, 0, 16, 4).data, sum = 0;
+      for (var i = 0; i < d.length; i += 4) sum += d[i]*.2126 + d[i+1]*.7152 + d[i+2]*.0722;
+      var lum = sum / (d.length / 4);
+      var filmVisible = filmP < 1 || scroller.getBoundingClientRect().bottom > 60;
+      filmLight = filmVisible && lum > 138;
+      applyHeader();
+    } catch(e){}
+  }
+  setInterval(sampleLuminance, 180);
+
+  /* ---------- the tick ---------- */
+  var currentFrame = 0, filmP = 0, lastY = 0, scrollDir = 1;
+  var chLabel = document.getElementById('chLabel');
+  var chBar = document.getElementById('chBar');
+  var filmFade = document.getElementById('filmFade');
+  var grainEl = document.querySelector('.grain');
+  var CHAPTERS = [
+    [0.00, '01 / THE CANVAS'], [0.27, '02 / THE BUILD'],
+    [0.54, '03 / THE SIGNAL'], [0.78, '04 / THE LINE']
+  ];
+  function tick(){
+    var r = scroller.getBoundingClientRect();
+    filmP = Math.max(0, Math.min(1, -r.top / (r.height - window.innerHeight)));
+    var y = window.scrollY;
+    if (y !== lastY){ scrollDir = y > lastY ? 1 : -1; lastY = y; }
+
+    var target = filmP * (FRAME_COUNT - 1);
+    currentFrame += (target - currentFrame) * 0.14;
+    if (Math.abs(target - currentFrame) < 0.35) currentFrame = target;
+    var idx = Math.round(currentFrame);
+    ensureBitmaps(idx);
+    drawFrame(idx, false);
+
+    for (var i = 0; i < beats.length; i++){
+      var b = beats[i], a = beatAlpha(b, filmP);
+      b.el.style.opacity = a;
+      b.el.style.transform = a > 0 && a < 1 ? 'translateY(' + (scrollDir * (1 - a) * 22) + 'px)' : 'translateY(0)';
+    }
+
+    pAlpha = Math.max(0, 1 - filmP / 0.07);
+
+    var afterFilm = r.bottom <= window.innerHeight * .6;
+    if (afterFilm){ chLabel.textContent = 'ATLAS AUTOMATE'; }
+    else {
+      for (var c = CHAPTERS.length - 1; c >= 0; c--){
+        if (filmP >= CHAPTERS[c][0]){ chLabel.textContent = CHAPTERS[c][1]; break; }
+      }
+    }
+    chBar.style.transform = 'scaleX(' + filmP + ')';
+
+    var seam = Math.max(0, Math.min(1, (filmP - 0.92) / 0.08));
+    filmFade.style.opacity = seam;
+    grainEl.style.opacity = 0.05 * (1 - seam);
+
+    requestAnimationFrame(tick);
+  }
+
+  /* ---------- content ---------- */
+  ScrollTrigger.create({
+    trigger: '#aftermath', start: 'top 25%', end: 'bottom 44px',
+    onToggle: function(self){ inAftermath = self.isActive; applyHeader(); }
+  });
+  ScrollTrigger.create({
+    trigger: '#copilot', start: 'top 44px', end: 'bottom 44px',
+    onToggle: function(self){ inDarkBand = self.isActive; applyHeader(); }
+  });
+
+  var INSTANT = JUMP !== null;
+  function dur(d){ return INSTANT ? 0.001 : d; }
+  gsap.utils.toArray('.rv').forEach(function(el){
+    gsap.fromTo(el, { autoAlpha: 0, y: 34 }, {
+      autoAlpha: 1, y: 0, duration: dur(.9), ease: 'power3.out',
+      scrollTrigger: { trigger: el, start: 'top 86%', once: true }
+    });
+  });
+  gsap.utils.toArray('.mod-row').forEach(function(el, i){
+    gsap.to(el, {
+      clipPath: 'inset(0 0 0% 0)', duration: dur(.9), ease: 'power3.inOut',
+      delay: INSTANT ? 0 : (i % 3) * .08,
+      scrollTrigger: { trigger: el, start: 'top 88%', once: true }
+    });
+  });
+
+  /* ---------- settle + dev contract ---------- */
+  function settle(){
+    sizeCanvas();
+    window.addEventListener('resize', sizeCanvas);
+    ScrollTrigger.refresh();
+    if (JUMP !== null){
+      var yy = +JUMP || 0;
+      window.scrollTo(0, yy);
+      ScrollTrigger.update();
+      ScrollTrigger.getAll().forEach(function(st){
+        if (st.animation) st.animation.totalProgress(st.progress);
+      });
+      var r = scroller.getBoundingClientRect();
+      filmP = Math.max(0, Math.min(1, -r.top / (r.height - window.innerHeight)));
+      currentFrame = filmP * (FRAME_COUNT - 1);
+      var idx = Math.round(currentFrame);
+      var img = images[nearestFrame(idx)];
+      var decodeP = img ? createImageBitmap(img).then(function(b){ bitmaps.set(idx, b); })
+                        : Promise.resolve();
+      decodeP.then(function(){
+        ensureBitmaps(idx);
+        drawFrame(idx, true);
+        requestAnimationFrame(tick);
+        requestAnimationFrame(function(){ requestAnimationFrame(function(){
+          window.__ready = true;
+        }); });
+      });
+    } else {
+      ensureBitmaps(0);
+      drawFrame(0, true);
+      requestAnimationFrame(tick);
+      requestAnimationFrame(function(){ requestAnimationFrame(function(){
+        window.__ready = true;
+      }); });
+    }
+    loaderEl.classList.add('done');
+  }
+
+  var fontsReady = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
+  Promise.all([fontsReady, loadPromise]).then(function(){
+    if (document.readyState === 'complete') settle();
+    else window.addEventListener('load', settle);
+  });
+})();
+</script>
+</body>
+</html>

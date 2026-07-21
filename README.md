@@ -11,10 +11,12 @@ and a dawn city — then dissolves into a restructured content page.
 
 | File | What it is |
 |------|------------|
-| `index.html` | The **cinematic footage film** — 5 generated shots chained frame-to-frame, scrubbed on a `<canvas>`. Needs the `frames/` folder beside it. |
-| `meridian-purecode.html` | The **pure-code fallback** — the same journey in GSAP/Lenis motion, zero assets. |
-| `PROPOSAL.md` | The written rationale: audit of the current page, concepts, section-by-section mapping. |
-| `frames/` | 301 JPEG frames the film scrubs through. |
+| `index.html` | The **home-page concept** — a 5-shot cinematic film chained frame-to-frame, scrubbed on a `<canvas>`. Needs the `frames/` folder beside it. |
+| `automate/` | The **product-page concept** ("Atlas Automate") — its own 4-shot film (`automate/frames/`) and conversion-focused product architecture. |
+| `meridian-purecode.html` | The **pure-code fallback** — the home-page journey in GSAP/Lenis motion, zero assets. |
+| `PROPOSAL.md` | Home-page rationale: audit of the current page, concepts, section-by-section mapping. |
+| `PROPOSAL-AUTOMATE.md` | Product-page rationale: audit, concepts, mapping. |
+| `frames/` | 301 JPEG frames the home film scrubs through. |
 
 ## Run it
 
