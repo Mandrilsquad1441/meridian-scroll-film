@@ -22,7 +22,7 @@
     --copper-deep:#007575; --copper-display:#008C8C;
     --paper:#F5F7F7; --steel:#7C8296; --line:rgba(255,255,255,.10);
     --line-dark:rgba(0,0,40,.12);
-    --seam:#324857; /* sampled from the film's final frame at assembly */
+    --seam:#32404F; /* sampled from the film's final frame at assembly */
   }
   *{margin:0;padding:0;box-sizing:border-box}
   html{background:var(--ink);scrollbar-color:#1A2242 var(--ink)}
@@ -588,7 +588,7 @@
 
   /* ---------- film config (set by the assembly step) ---------- */
   var FRAME_COUNT = 241;          /* assembly: f0000..f0240 */
-  var FRAME_W = 864, FRAME_H = 496;   /* full-bleed, no crop needed */
+  var FRAME_W = 1280, FRAME_H = 720;  /* 1080p master, extracted at 1280w */
   function framePath(i){ return 'frames/f' + String(i).padStart(4, '0') + '.jpg'; }
 
   /* ---------- jank meter (dev contract) ---------- */
