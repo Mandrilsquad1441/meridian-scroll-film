@@ -1,0 +1,10 @@
+# Raw video intermediates — the runtime frames/ folder is committed, these are not
+footage/
+dist/
+
+# tooling / os
+node_modules/
+.netlify/
+.DS_Store
+Thumbs.db
+*.log
