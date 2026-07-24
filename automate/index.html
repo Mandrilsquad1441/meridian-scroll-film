@@ -613,10 +613,10 @@
   var FRAME_W = 1280, FRAME_H = 720;  /* 1080p master, extracted at 1280w */
   function framePath(i){ return 'frames/f' + String(i).padStart(4, '0') + '.jpg'; }
 
-  /* ---------- jank meter (dev contract) ---------- */
-  (function(){
+  /* ---------- jank meter (dev only: ?perf or ?jump — never runs for real visitors) ---------- */
+  if (JUMP !== null || location.search.indexOf('perf') >= 0) (function(){
     var deltas = [], last = performance.now();
-    function tick(t){
+    function jtick(t){
       deltas.push(t - last); last = t;
       if (deltas.length >= 120){
         var s = deltas.slice().sort(function(a,b){return a-b});
@@ -624,9 +624,9 @@
                     'ms max=' + s[s.length-1].toFixed(1) + 'ms');
         deltas.length = 0;
       }
-      requestAnimationFrame(tick);
+      requestAnimationFrame(jtick);
     }
-    requestAnimationFrame(tick);
+    requestAnimationFrame(jtick);
   })();
 
   /* ---------- reduced motion: static page, contract honoured ---------- */
@@ -685,82 +685,103 @@
     if (displayed >= 0) drawFrame(displayed, true);
   }
 
-  var images = new Array(FRAME_COUNT);
+  var blobs = new Array(FRAME_COUNT);
   var loadedCount = 0, allLoaded = false;
   var loaderEl = document.getElementById('loader');
   var loaderBar = document.getElementById('loaderBar');
   var loadResolve, loadPromise = new Promise(function(r){ loadResolve = r; });
   (function pump(){
-    var next = 0, inFlight = 0, CONC = 10;
-    function kick(){
-      while (inFlight < CONC && next < FRAME_COUNT){
-        (function(i){
-          var img = new Image();
-          inFlight++; next++;
-          img.onload = img.onerror = function(){
-            inFlight--; loadedCount++;
-            if (img.complete && img.naturalWidth) images[i] = img;
-            loaderBar.style.transform = 'scaleX(' + (loadedCount / FRAME_COUNT) + ')';
-            if (loadedCount >= FRAME_COUNT){ allLoaded = true; loadResolve(); }
-            else kick();
-          };
-          img.src = framePath(i);
-        })(next);
-      }
+    var next = 0, inFlight = 0, CONC = 12;
+    function one(i){
+      inFlight++;
+      fetch(framePath(i)).then(function(r){ return r.blob(); }).then(function(b){ blobs[i] = b; })
+        .catch(function(){}).then(function(){
+          inFlight--; loadedCount++;
+          loaderBar.style.transform = 'scaleX(' + (loadedCount / FRAME_COUNT) + ')';
+          if (loadedCount >= FRAME_COUNT){ allLoaded = true; loadResolve(); } else kick();
+        });
     }
+    function kick(){ while (inFlight < CONC && next < FRAME_COUNT){ one(next++); } }
     kick();
   })();
 
+  /* ImageBitmap sliding window — biased in the scroll direction, decoded center-out,
+     window/eviction shrink on low-memory / mobile devices. */
   var bitmaps = new Map(), decoding = new Set();
-  var B_AHEAD = 18, B_KEEP = 28, bmpCenter = -999;
+  var LOWMEM = (navigator.deviceMemory && navigator.deviceMemory <= 4) || window.innerWidth < 760;
+  /* Retained decoded bitmaps are bounded by a MEMORY budget, not a frame count — otherwise
+     big (1080p) frames retain hundreds of MB and trigger GC stalls. The window is derived
+     from that budget and biased toward the scroll direction; decodes are concurrency-capped
+     so a fast flick can't fire a burst of costly createImageBitmap calls at once. */
+  var FRAME_MB = (FRAME_W * FRAME_H * 4) / 1048576;
+  var TOTAL_KEEP = Math.max(18, Math.min(120, Math.floor((LOWMEM ? 64 : 120) / FRAME_MB)));
+  var B_KEEP = Math.ceil(TOTAL_KEEP / 2);
+  var B_AHEAD = Math.max(8, B_KEEP - 3), B_BEHIND = Math.max(3, B_KEEP - B_AHEAD);
+  var MAXDEC = LOWMEM ? 8 : 16;
+  var bmpCenter = -999, decodeDir = 1, decodeQueue = [];
   var displayed = -1;
-  function ensureBitmaps(center){
-    if (Math.abs(center - bmpCenter) < 3) return;
-    bmpCenter = center;
-    var lo = Math.max(0, center - B_AHEAD), hi = Math.min(FRAME_COUNT - 1, center + B_AHEAD);
-    for (var i = lo; i <= hi; i++){
+  function pumpDecodes(){
+    while (decoding.size < MAXDEC && decodeQueue.length){
+      var i = decodeQueue.shift();
+      if (i < 0 || i >= FRAME_COUNT || bitmaps.has(i) || decoding.has(i) || !blobs[i]) continue;
+      decoding.add(i);
       (function(i){
-        if (bitmaps.has(i) || decoding.has(i) || !images[i]) return;
-        decoding.add(i);
-        createImageBitmap(images[i]).then(function(b){
+        createImageBitmap(blobs[i]).then(function(b){
           decoding.delete(i);
-          if (Math.abs(i - bmpCenter) > B_KEEP){ b.close(); return; }
-          bitmaps.set(i, b);
-          if (i === displayed) drawFrame(i, true);
-        }).catch(function(){ decoding.delete(i); });
+          if (i < bmpCenter - B_KEEP || i > bmpCenter + B_KEEP) b.close();
+          else { bitmaps.set(i, b); if (i === displayed) drawFrame(i, true); }
+          pumpDecodes();
+        }).catch(function(){ decoding.delete(i); pumpDecodes(); });
       })(i);
     }
+  }
+  function ensureBitmaps(center, dir){
+    if (dir) decodeDir = dir;
+    if (Math.abs(center - bmpCenter) < 2) return;
+    bmpCenter = center;
+    var ahead = decodeDir >= 0 ? B_AHEAD : B_BEHIND;
+    var behind = decodeDir >= 0 ? B_BEHIND : B_AHEAD;
+    var lo = Math.max(0, center - behind), hi = Math.min(FRAME_COUNT - 1, center + ahead);
+    var order = [], i;
+    for (i = center; i <= hi; i++) order.push(i);        // playhead → ahead first
+    for (i = center - 1; i >= lo; i--) order.push(i);     // then behind
+    decodeQueue = order;                                  // center-out priority, refreshed each recenter
+    pumpDecodes();
     Array.prototype.forEach.call(Array.from(bitmaps.keys()), function(k){
       if (k < center - B_KEEP || k > center + B_KEEP){ bitmaps.get(k).close(); bitmaps.delete(k); }
     });
   }
-  function nearestFrame(i){
-    if (images[i]) return i;
+  /* nearest ALREADY-DECODED bitmap — on a window miss we draw this (a few frames stale) and
+     HOLD until the exact frame decodes, rather than ever decoding on the main thread. */
+  function nearestBitmap(idx){
+    for (var d = 0; d < FRAME_COUNT; d++){
+      if (bitmaps.has(idx - d)) return idx - d;
+      if (bitmaps.has(idx + d)) return idx + d;
+    }
+    return -1;
+  }
+  function nearestLoaded(i){
+    if (blobs[i]) return i;
     for (var d = 1; d < FRAME_COUNT; d++){
-      if (images[i - d]) return i - d;
-      if (images[i + d]) return i + d;
+      if (blobs[i - d]) return i - d;
+      if (blobs[i + d]) return i + d;
     }
     return -1;
   }
   function drawFrame(idx, force){
     if (idx === displayed && !force) return;
-    var src = bitmaps.get(idx), w = FRAME_W, h = FRAME_H;
-    if (!src){
-      var n = nearestFrame(idx);
-      if (n < 0) return;
-      src = bitmaps.get(n) || images[n];
-      w = src.width || FRAME_W; h = src.height || FRAME_H;
-    } else { w = src.width; h = src.height; }
+    var nb = bitmaps.has(idx) ? idx : nearestBitmap(idx);
+    if (nb < 0) return;                    // nothing decoded near the playhead — hold the last frame
+    var src = bitmaps.get(nb), w = src.width, h = src.height;
     var cw = canvas.width, ch = canvas.height;
     var s = Math.max(cw / w, ch / h);
-    var dw = w * s, dh = h * s;
-    ctx.drawImage(src, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
+    ctx.drawImage(src, (cw - w * s) / 2, (ch - h * s) / 2, w * s, h * s);
     displayed = idx;
   }
 
-  /* ---------- ambient hero particles ---------- */
+  /* ---------- ambient hero particles (driven by the main tick, not a 2nd rAF) ---------- */
   var pCanvas = document.getElementById('hero-particles');
-  var pAlpha = 1;
+  var pAlpha = 1, drawParticles;
   (function(){
     var pctx = pCanvas.getContext('2d');
     var sprite = document.createElement('canvas'); sprite.width = sprite.height = 32;
@@ -769,7 +790,7 @@
     grad.addColorStop(0,'rgba(0,255,185,.9)'); grad.addColorStop(.4,'rgba(0,255,185,.25)');
     grad.addColorStop(1,'rgba(0,255,185,0)');
     sctx.fillStyle = grad; sctx.fillRect(0,0,32,32);
-    var W, H, parts = [];
+    var W, H, parts = [], cleared = false;
     function size(){
       var r = pCanvas.getBoundingClientRect();
       W = pCanvas.width = Math.max(1, Math.round(r.width)) || window.innerWidth;
@@ -780,8 +801,9 @@
       parts.push({ x: Math.random(), y: Math.random(), z: .3 + Math.random()*.7,
                    ph: Math.random()*Math.PI*2, sp: .00012 + Math.random()*.00028 });
     }
-    function draw(t){
-      if (pAlpha <= 0.005){ pctx.clearRect(0,0,W,H); return requestAnimationFrame(draw); }
+    drawParticles = function(t){
+      if (pAlpha <= 0.005){ if (!cleared){ pctx.clearRect(0,0,W,H); cleared = true; } return; }
+      cleared = false;
       pctx.clearRect(0,0,W,H);
       if (JUMP !== null) t = 1000;
       for (var i = 0; i < parts.length; i++){
@@ -793,14 +815,12 @@
         pctx.drawImage(sprite, p.x*W, p.y*H, s, s);
       }
       pctx.globalAlpha = 1;
-      requestAnimationFrame(draw);
-    }
-    requestAnimationFrame(draw);
+    };
   })();
 
   /* ---------- beats ---------- */
   var beats = Array.prototype.map.call(document.querySelectorAll('.beat'), function(el){
-    return { el: el,
+    return { el: el, _a: -1,
       in:  parseFloat(el.getAttribute('data-in')),
       peak: parseFloat(el.getAttribute('data-peak')),
       out: parseFloat(el.getAttribute('data-out')) };
@@ -822,67 +842,80 @@
   }
   function sampleLuminance(){
     if (displayed < 0) return;
-    var src = bitmaps.get(displayed) || images[displayed];
-    if (!src) return;
+    var nb = bitmaps.has(displayed) ? displayed : nearestBitmap(displayed);
+    if (nb < 0) return;
+    var src = bitmaps.get(nb);
     try {
-      var h = (src.height || FRAME_H);
-      lumCtx.drawImage(src, 0, 0, (src.width || FRAME_W), Math.max(1, Math.round(h * .14)), 0, 0, 16, 4);
+      lumCtx.drawImage(src, 0, 0, src.width, Math.max(1, Math.round(src.height * .14)), 0, 0, 16, 4);
       var d = lumCtx.getImageData(0, 0, 16, 4).data, sum = 0;
       for (var i = 0; i < d.length; i += 4) sum += d[i]*.2126 + d[i+1]*.7152 + d[i+2]*.0722;
-      var lum = sum / (d.length / 4);
-      var filmVisible = filmP < 1 || scroller.getBoundingClientRect().bottom > 60;
-      filmLight = filmVisible && lum > 138;
+      filmLight = (sum / (d.length / 4)) > 138;
       applyHeader();
     } catch(e){}
   }
-  setInterval(sampleLuminance, 180);
 
-  /* ---------- the tick ---------- */
-  var currentFrame = 0, filmP = 0, lastY = 0, scrollDir = 1;
+  /* ---------- the tick (self-suspends off-screen) ---------- */
+  var currentFrame = 0, filmP = 0, lastLumT = 0, ticking = false, filmVisible = true;
+  var lastLabel = '', lastBar = -1, lastSeam = -1;
   var chLabel = document.getElementById('chLabel');
   var chBar = document.getElementById('chBar');
   var filmFade = document.getElementById('filmFade');
   var grainEl = document.querySelector('.grain');
+  var HOME_LABEL = 'ATLAS AUTOMATE';
   var CHAPTERS = [
     [0.00, '01 / THE CANVAS'], [0.27, '02 / THE BUILD'],
     [0.54, '03 / THE SIGNAL'], [0.78, '04 / THE LINE']
   ];
-  function tick(){
+  function setLabel(s){ if (s !== lastLabel){ lastLabel = s; chLabel.textContent = s; } }
+  function tick(t){
+    if (!filmVisible){ ticking = false; return; }
     var r = scroller.getBoundingClientRect();
     filmP = Math.max(0, Math.min(1, -r.top / (r.height - window.innerHeight)));
-    var y = window.scrollY;
-    if (y !== lastY){ scrollDir = y > lastY ? 1 : -1; lastY = y; }
 
     var target = filmP * (FRAME_COUNT - 1);
-    currentFrame += (target - currentFrame) * 0.14;
+    var dir = target >= currentFrame ? 1 : -1;
+    currentFrame += (target - currentFrame) * 0.2;
     if (Math.abs(target - currentFrame) < 0.35) currentFrame = target;
     var idx = Math.round(currentFrame);
-    ensureBitmaps(idx);
+    ensureBitmaps(idx, dir);
     drawFrame(idx, false);
 
+    /* beats — dirty-checked (only write on change) */
     for (var i = 0; i < beats.length; i++){
       var b = beats[i], a = beatAlpha(b, filmP);
-      b.el.style.opacity = a;
-      b.el.style.transform = a > 0 && a < 1 ? 'translateY(' + (scrollDir * (1 - a) * 22) + 'px)' : 'translateY(0)';
+      if (a !== b._a){
+        b._a = a;
+        b.el.style.opacity = a;
+        b.el.style.transform = a > 0 && a < 1 ? 'translateY(' + (dir * (1 - a) * 22) + 'px)' : 'translateY(0)';
+      }
     }
 
     pAlpha = Math.max(0, 1 - filmP / 0.07);
+    drawParticles(t);
 
-    var afterFilm = r.bottom <= window.innerHeight * .6;
-    if (afterFilm){ chLabel.textContent = 'ATLAS AUTOMATE'; }
-    else {
-      for (var c = CHAPTERS.length - 1; c >= 0; c--){
-        if (filmP >= CHAPTERS[c][0]){ chLabel.textContent = CHAPTERS[c][1]; break; }
-      }
-    }
-    chBar.style.transform = 'scaleX(' + filmP + ')';
+    /* chapter HUD — dirty-checked */
+    if (r.bottom <= window.innerHeight * .6) setLabel(HOME_LABEL);
+    else { for (var c = CHAPTERS.length - 1; c >= 0; c--){ if (filmP >= CHAPTERS[c][0]){ setLabel(CHAPTERS[c][1]); break; } } }
+    if (Math.abs(filmP - lastBar) > 0.0008){ lastBar = filmP; chBar.style.transform = 'scaleX(' + filmP + ')'; }
 
+    /* seam melt — dirty-checked */
     var seam = Math.max(0, Math.min(1, (filmP - 0.92) / 0.08));
-    filmFade.style.opacity = seam;
-    grainEl.style.opacity = 0.05 * (1 - seam);
+    if (seam !== lastSeam){ lastSeam = seam; filmFade.style.opacity = seam; grainEl.style.opacity = 0.05 * (1 - seam); }
 
+    if (t - lastLumT > 180){ lastLumT = t; sampleLuminance(); }
     requestAnimationFrame(tick);
   }
+  function startTick(){ if (!ticking){ ticking = true; requestAnimationFrame(tick); } }
+
+  /* pause the entire film loop (draw, beats, HUD, luminance, particles) when off-screen */
+  new IntersectionObserver(function(es){
+    var vis = es[0].isIntersecting;
+    if (vis === filmVisible) return;
+    filmVisible = vis;
+    if (vis) startTick();
+    else { filmLight = false; setLabel(HOME_LABEL);
+           if (lastBar !== 1){ lastBar = 1; chBar.style.transform = 'scaleX(1)'; } applyHeader(); }
+  }, { rootMargin: '160px 0px' }).observe(scroller);
 
   /* ---------- content ---------- */
   ScrollTrigger.create({
@@ -926,24 +959,29 @@
       filmP = Math.max(0, Math.min(1, -r.top / (r.height - window.innerHeight)));
       currentFrame = filmP * (FRAME_COUNT - 1);
       var idx = Math.round(currentFrame);
-      var img = images[nearestFrame(idx)];
-      var decodeP = img ? createImageBitmap(img).then(function(b){ bitmaps.set(idx, b); })
-                        : Promise.resolve();
+      var blob = blobs[nearestLoaded(idx)];
+      var decodeP = blob ? createImageBitmap(blob).then(function(b){ bitmaps.set(idx, b); })
+                         : Promise.resolve();
       decodeP.then(function(){
         ensureBitmaps(idx);
         drawFrame(idx, true);
-        requestAnimationFrame(tick);
+        startTick();
         requestAnimationFrame(function(){ requestAnimationFrame(function(){
           window.__ready = true;
         }); });
       });
     } else {
-      ensureBitmaps(0);
-      drawFrame(0, true);
-      requestAnimationFrame(tick);
-      requestAnimationFrame(function(){ requestAnimationFrame(function(){
-        window.__ready = true;
-      }); });
+      /* pre-decode frame 0 so the canvas is painted before we declare ready */
+      var b0 = blobs[nearestLoaded(0)];
+      var p0 = b0 ? createImageBitmap(b0).then(function(b){ bitmaps.set(0, b); }) : Promise.resolve();
+      p0.then(function(){
+        ensureBitmaps(0);
+        drawFrame(0, true);
+        startTick();
+        requestAnimationFrame(function(){ requestAnimationFrame(function(){
+          window.__ready = true;
+        }); });
+      });
     }
     loaderEl.classList.add('done');
   }
